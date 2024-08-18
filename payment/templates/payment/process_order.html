@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder">Processing Order...</h1>
+      <p class="lead fw-normal text-white-50 mb-0">Enter Your Payment Info..</p>
+    </div>
+  </div>
+</header>
+<div class="container mt-5">
+    <h2 class="mb-4">Checkout</h2>
+    <div class="row">
+        <!-- Section for Cart Items -->
+        <div class="col-md-8">
+            <h4>Your Cart</h4>
+            {% if cart_products %}
+            {% for product in cart_products %}
+            <div class="card mb-3" style="max-width: 100%;">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="{{ product.image.url }}" class="img-fluid rounded-3" style="width: 120px;" alt="Product-Image">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body" style="padding-left: 10px;">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text">Quantity:
+                            {% for key, value in product_qty.items %}
+                              {% if key == product.id|slugify %}
+                                {{ value }}
+                              {% endif %}
+                            {% endfor %}
+                            </p>
+                            {% if product.is_sale %}
+                            <p class="card-text">Price: ${{ product.sale_price }}</p>
+                            {% else %}
+                            <p class="card-text">Price: ${{ product.price }}</p>
+                            {% endif %}
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            <a href="{% url 'cart_summary' %}" class="btn btn-secondary btn-block mt-4">Update Items</a>
+            {% endif %}
+        </div>
+
+        <!-- Section for Order Summary -->
+        <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                Order Summary
+              </div>
+           </div>
+            <ul class="list-group">
+                <li class="list-group-item">Subtotal: ${{total}}</li>
+                <li class="list-group-item">Shipping: $10</li>
+                <li class="list-group-item">Total: ${{finally_price}}</li>
+            </ul>
+            <br>
+            <div class="card">
+              <div class="card-header">
+                Shipping Info
+              </div>
+              <div class="card-body">
+                  <div class="col-md-6">
+                      <p><strong>Full Name:</strong> {{ shipping_form.full_name }}</p>
+                  </div>
+                  <div class="col-md-6">
+                      <p><strong>Email:</strong> {{ shipping_form.email }}</p>
+                  </div>
+                  <div class="col-md-12">
+                      <p><strong>Address 1:</strong> {{ shipping_form.adderss1 }}</p>
+                  </div>
+                  <div class="col-md-6">
+                      <p><strong>Country:</strong> {{ shipping_form.country }}</p>
+                  </div>
+                  {% if shipping_form.adderss2 %}
+                  <div class="col-md-12">
+                      <p><strong>Address  2:</strong> {{ shipping_form.adderss2 }}</p>
+                  </div>
+                  {% elif shipping_form.city %}
+                  <div class="col-md-6">
+                      <p><strong>City:</strong> {{ shipping_form.city }}</p>
+                  </div>
+                  {% elif shipping_form.zipcode %}
+                  <div class="col-md-6">
+                      <p><strong>Zip Code:</strong> {{ shipping_form.zipcode }}</p>
+                  </div>
+                  {% elif shipping_form.state %}
+                  <div class="col-md-6">
+                      <p><strong>State:</strong> {{ shipping_form.state }}</p>
+                  </div>
+                  {% endif %}
+                  <a class="btn btn-secondary btn-block mt-4" href="{% url 'checkout' %}">Update Shipping</a>
+              </div>
+            </div>
+            <br><br>
+            <div class="card">
+              <div class="card-header">
+                Billing Info
+              </div>
+              <div class="card-body">
+                <form method="POST" action="">
+                  {% csrf_token %}
+                  {{ billing_form.as_p }}
+                  <button type="submit" class="btn btn-success btn-block mt-4">Pay Now</button>
+                </form>
+                
+              </div>
+            </div>
+            <br/>
+        </div>
+    </div>
+    <br><br><br>
+</div>
+{% endblock content %}

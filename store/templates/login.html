@@ -1,0 +1,47 @@
+{% extends "base.html" %} 
+{% load static %} 
+{% block content %}
+
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder">Log in your Account....</h1>
+      <p class="lead fw-normal text-white-50 mb-0"></p>
+    </div>
+  </div>
+</header>
+
+<div class="container full-height d-flex flex-column justify-content-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <br />
+      <h2 class="text-center mb-4">Login</h2>
+
+      <form method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label">User</label>
+          <input
+            type="text"
+            class="form-control"
+            name="username"
+            placeholder="Enter your Username" />
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label">Password</label>
+          <input
+            type="password"
+            placeholder="Enter your Password"
+            name="password"
+            class="form-control"
+            id="exampleInputPassword1" />
+          <br />
+        </div>
+        <button type="submit" class="btn btn-secondary w-100">Submit</button>
+        <br /><br /><br /><br /><br /><br /><br /><br /><br />
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

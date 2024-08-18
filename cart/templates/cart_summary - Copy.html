@@ -1,0 +1,95 @@
+{% extends "base.html" %} 
+{% load static %} 
+{% block content %}
+
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder">Shopping Cart</h1>
+      <p class="lead fw-normal text-white-50 mb-0">View your Cart</p>
+    </div>
+  </div>
+</header>
+<br/>
+<div class="container">
+
+{% if cart_products  %}
+{% for product  in cart_products %}
+<div class="row justify-content-center">
+    <div class="col-md-8 product-card">
+        <div class="row">
+            <div class="col-md-3">
+                <img src="{{ product.image.url }}" alt="Product Image" class="img-fluid">
+            </div>
+            <div class="col-md-9">
+                <h2>{{ product.name }}</h2>
+                <br>
+                {% comment %} {{ product.description }} {% endcomment %}
+                
+                {% if product.is_sale %}
+                <div class="d-flex justify-content-center small text-warning mb-2">
+                    <div class="bi-star-fill"></div>
+                    &nbsp;&nbsp;Sale!&nbsp;&nbsp;
+                    <div class="bi-star-fill"></div>
+                </div>
+                <del class="d-flex justify-content-center">
+                    ${{ product.price }}
+                </del>
+                <p class="d-flex justify-content-center">${{ product.sale_price }}</p>
+                {% else %}
+                <p class="d-flex justify-content-center mt-4">${{ product.price }}</p>
+                {% endif %}
+                <br /><br />
+                <div class="row justify-content-center">
+                  <div class="col-md-2">Quantity:</div>
+                  <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="qty-cart">
+                      <option selected value="">
+                        {% for key, value in product_qty.items  %}
+                          {% if key == product.id|slugify %}
+                            {{value}}
+                          {% endif %}
+                        {% endfor %}
+                      </option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                  </div>
+                </div>
+                <br /><br />
+                <form method="post">
+                    {% csrf_token %}
+                    <a type="button" href='{% url "home" %}' class="btn btn-denger">Delete</a>
+                    <button type="button" class="btn btn-success" value="{{ product.id }}" id="buy-now">buy now</button>
+                </form>
+                <br>
+            </div>
+        </div>
+    </div>
+</div>
+<br><br>
+{% endfor %}
+</div>
+<br>
+<br>
+{% else %}
+<div class="container empty-cart-container">
+  <h1 class="display-4 mb-3">There is nothing in Your Cart ..</h1>
+  <a class="btn btn-custom-gray btn-lg" href="{% url 'home' %}">Enter to explore products</a>
+</div>
+{% endif %}
+  
+  
+
+
+{% comment %} ________________________________________________________________________ {% endcomment %}
+  
+</div>
+<br><br><br><br><br><br><br><br><br><br>
+
+
+
+{% endblock content %}

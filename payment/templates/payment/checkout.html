@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% load django_bootstrap5 %}
+{% block content %}
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder">Checkout</h1>
+      <p class="lead fw-normal text-white-50 mb-0">Review Your Order..</p>
+    </div>
+  </div>
+</header>
+<div class="container mt-5">
+    <h2 class="mb-4">Checkout</h2>
+    <div class="row">
+        <!-- Section for Cart Items -->
+        <div class="col-md-8">
+            <h4>Your Cart</h4>
+            {% if cart_products %}
+            {% for product in cart_products %}
+            <div class="card mb-3" style="max-width: 100%;">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="{{ product.image.url }}" class="img-fluid rounded-3" style="width: 120px;" alt="Product-Image">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text">Quantity:
+                            {% for key, value in product_qty.items %}
+                              {% if key == product.id|slugify %}
+                                {{ value }}
+                              {% endif %}
+                            {% endfor %}
+                            </p>
+                            {% if product.is_sale %}
+                            <p class="card-text">Price: ${{ product.sale_price }}</p>
+                            {% else %}
+                            <p class="card-text">Price: ${{ product.price }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            <a href="{% url 'cart_summary' %}" class="btn btn-secondary btn-block mt-4">Update Items</a>
+            {% endif %}
+        </div>
+
+        <!-- Section for Order Summary -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Order Summary
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Subtotal: ${{total}}</li>
+                    <li class="list-group-item">Shipping: $10</li>
+                    <li class="list-group-item">Total: ${{finally_price}}</li>
+                </ul>
+            </div>
+            <br>
+            <div class="card">
+                <div class="card-header">
+                    <h4>    Shipping Info
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'billing_info' %}">
+                        {% csrf_token %}
+                        {% bootstrap_form shipping_form %}
+                        <button type="submit" class="btn btn-primary btn-block mt-4">Proceed to Payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br><br><br>
+</div>
+{% endblock content %}

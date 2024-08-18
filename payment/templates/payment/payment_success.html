@@ -1,0 +1,37 @@
+{% extends "base.html" %} 
+{% load static %} 
+{% block content %}
+{% load django_bootstrap5 %}
+
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder">Shipping Info</h1>
+      <p class="lead fw-normal text-white-50 mb-0">
+        Update Your Shipping Info....
+      </p>
+    </div>
+  </div>
+</header>
+
+<div class="container full-height d-flex flex-column justify-content-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <br />
+      <h2 class="text-center mb-4">Update</h2>
+      
+      <form method="POST" action="{% url 'payment_success' %}">
+        {% csrf_token %}
+        {% bootstrap_form shipping_form %}
+
+  
+        <button type="submit" class="btn btn-success w-100 ">Update</button>
+        
+        
+        <br /><br /><br /><br /><br /><br /><br /><br /><br />
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

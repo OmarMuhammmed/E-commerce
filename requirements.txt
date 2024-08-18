@@ -1,0 +1,11 @@
+asgiref==3.8.1
+Django==5.0.6
+django-bootstrap5==24.2
+gunicorn==23.0.0
+packaging==24.1
+pillow==10.3.0
+psycopg2==2.9.9
+python-decouple==3.8
+sqlparse==0.5.0
+tzdata==2024.1
+whitenoise==6.7.0

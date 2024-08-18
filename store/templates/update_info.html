@@ -1,0 +1,40 @@
+{% extends "base.html" %} 
+{% load static %} 
+{% block content %}
+{% load django_bootstrap5 %}
+<header class="bg-dark py-5">
+  <div class="container px-4 px-lg-5 my-5">
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder">Welcome To Profile</h1>
+      <p class="lead fw-normal text-white-50 mb-0">
+        Update Info for  Account....
+      </p>
+    </div>
+  </div>
+</header>
+
+<div class="container full-height d-flex flex-column justify-content-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <br />
+      
+      
+      <form method="POST" action="{% url 'update_info' %}">
+        <h4 class="text-center mb-4"> Billing Info</h4>
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <br /><br />
+        <h4 class="text-center mb-4"> Shipping Info</h4>
+        {% bootstrap_form shipping_form %}
+  
+        <button type="submit" class="btn btn-success w-100 ">Update Profile</button>
+        <br /><br /><br /><br />
+
+        
+        
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
