@@ -15,7 +15,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['e-commerce-production-e2d7.up.railway.app','https://e-commerce-production-e2d7.up.railway.app']
+ALLOWED_HOSTS = ['e-commerce-production-e2d7.up.railway.app']
 CSRF_TRUSTED_ORIGINS = ['https://e-commerce-production-e2d7.up.railway.app']
 
 # Application definition
