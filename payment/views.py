@@ -2,14 +2,14 @@ from django.shortcuts import render
 from .forms import ShippingInfoForm,PaymentForm
 from cart.cart import Cart
 from .models import ShippingAdderss,Order,OrderItem
-from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.contrib import messages
 from store.models import CustomerProfile, Product
 import datetime
-
-def payment_success(request):
-    return render(request,'payment/payment_success.html',{})
+from django.urls import reverse
+from paypal.standard.forms import PayPalPaymentsForm
+from django.conf import settings
+import uuid
 
 
 def checkout(request):
@@ -46,12 +46,28 @@ def billing_info(request):
         cart_products = cart.get_products()
         product_qty = cart.get_qty_for_product()
         total = cart.total() 
-        shipping_price = 10 
+        shipping_price = 5 
         finally_price = shipping_price + total
 
         # Create a session with Shipping Info
         my_shipping = request.POST
         request.session['my_shipping'] = my_shipping
+
+        host = request.get_host()
+        
+        # create paypal form dic 
+        paypal_dict = {
+            'business' : settings.PAYPAL_RECEIVER_EMAIL,
+            'amount': finally_price,
+            'item_name': 'Book Order',
+            'no_shipping': '2',
+            'invoice': str(uuid.uuid4()),
+            'currency_code': 'USD',
+            'notify_url': 'https://{}{}'.format(host, reverse("paypal-ipn")),
+            'return_url': 'https://{}{}'.format(host, reverse("payment_success")),
+            'cancel_return': 'https://{}{}'.format(host, reverse("payment_failed")),  
+        }
+        paypal_form = PayPalPaymentsForm(initial=paypal_dict)
 
         if request.user.is_authenticated:
               billing_form = PaymentForm()
@@ -61,6 +77,7 @@ def billing_info(request):
                                                             "shipping_form":request.POST ,
                                                             'finally_price' :finally_price,
                                                             'billing_form' : billing_form ,
+                                                            'paypal_form' : paypal_form
 
                                                            })
         else :
@@ -71,6 +88,7 @@ def billing_info(request):
                                                             "shipping_form":request.POST ,
                                                             'finally_price' :finally_price,
                                                             'billing_form' : billing_form,
+                                                            'paypal_form' : paypal_form,
                                                            })
     else:
         messages.success(request,'Access Denied')
@@ -197,6 +215,7 @@ def shipped_dash(request):
         messages.success(request,'Access Denied')
         return redirect('home')
 
+
 def un_shipped_dash(request):
    
    if request.user.is_authenticated and request.user.is_superuser:
@@ -216,6 +235,7 @@ def un_shipped_dash(request):
    else:
         messages.success(request,'Access Denied')
         return redirect('home')
+
 
 def orders(request, pk):
     if request.user.is_authenticated and request.user.is_superuser:
@@ -244,4 +264,11 @@ def orders(request, pk):
         messages.success(request, 'Access Denied')
         return redirect('home')
 
+
+def payment_success(request):
+    return render(request,'payment/payment_success.html',{})
+
+
+def payment_failed(request):
+    return render(request,'payment/payment_failed.html',{})
 

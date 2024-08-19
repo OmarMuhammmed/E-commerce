@@ -1,13 +1,8 @@
 from pathlib import Path
-import os
 from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
@@ -15,11 +10,12 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['e-commerce-production-e2d7.up.railway.app']
+ALLOWED_HOSTS = ['e-commerce-production-e2d7.up.railway.app','127.0.0.1']
 CSRF_TRUSTED_ORIGINS = ['https://e-commerce-production-e2d7.up.railway.app']
 
-# Application definition
 
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -32,6 +28,8 @@ INSTALLED_APPS = [
     'cart',
     'payment',
     'whitenoise.runserver_nostatic',
+    'paypal.standard.ipn',
+
     
 
 ]
@@ -130,3 +128,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Paypal settings 
+PAYPAL_TEST = True
+
+PAYPAL_RECEIVER_EMAIL = 'sb-3qyqz32299234@business.example.com' # Business sandbox account to test only

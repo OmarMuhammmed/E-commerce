@@ -5,9 +5,8 @@
 <!-- Header Section -->
 <header class="bg-dark py-5">
   <div class="container px-4 px-lg-5 my-5">
-    <div class="text-center text-success">
-      <h1 class="display-4 fw-bolder">Payment Successful!</h1>
-     
+    <div class="text-center text-white">
+      <h1 class="display-4 fw-bolder text-danger">Payment Failed</h1>
     </div>
   </div>
 </header>
@@ -18,11 +17,11 @@
     <div class="col-lg-6">
       <div class="card shadow-sm border-light">
         <div class="card-body">
-          <h2 class="card-title text-success">🎉 Payment Confirmed</h2>
+          <h2 class="card-title text-danger">⚠️ Payment Failed</h2>
           <p class="card-text">
-            Your payment has been processed successfully. We are preparing your order for shipment.
+            There was an issue processing your payment. Please try again or contact customer support.
           </p>
-          <a href="{% url 'home' %}" class="btn btn-primary btn-lg mt-3">Continue Shopping</a>
+          <a href="{% url 'billing_info' %}" class="btn btn-warning btn-lg mt-3">Try Again</a>
         </div>
       </div>
     </div>
