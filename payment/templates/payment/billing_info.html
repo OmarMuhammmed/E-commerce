@@ -54,7 +54,8 @@
               <div class="card-header">
                 Order Summary
               </div>
-              <ul class="list-group list-group-flush">
+           </div>
+            <ul class="list-group">
                 <li class="list-group-item">Subtotal: ${{total}}</li>
                 <li class="list-group-item">Shipping: $10</li>
                 <li class="list-group-item">Total: ${{finally_price}}</li>
@@ -97,9 +98,7 @@
                   <a class="btn btn-secondary btn-block mt-4" href="{% url 'checkout' %}">Update Shipping</a>
               </div>
             </div>
-            <br>
-            <img src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.shutterstock.com%2Fsearch%2Fpaypal&psig=AOvVaw3C7WQlFTBQqYO4BhvKpQHE&ust=1724165942918000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCPiHzueogYgDFQAAAAAdAAAAABAE" alt="" width="250px">
-            
+            <br><br><br>
             {{paypal_form.render}}
             <br><br>
             <div class="card">
