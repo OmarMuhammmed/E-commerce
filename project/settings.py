@@ -10,8 +10,8 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['e-commerce-production-e2d7.up.railway.app','127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ['https://e-commerce-production-e2d7.up.railway.app']
+ALLOWED_HOSTS = ['e-commerce-production-e2d7.up.railway.app','127.0.0.1','0553-102-46-205-15.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://e-commerce-production-e2d7.up.railway.app','https://0553-102-46-205-15.ngrok-free.app']
 
 
 
@@ -132,4 +132,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Paypal settings 
 PAYPAL_TEST = True
 
-PAYPAL_RECEIVER_EMAIL = 'sb-3qyqz32299234@business.example.com' # Business sandbox account to test only
+PAYPAL_RECEIVER_EMAIL = config('PAYPAL_RECEIVER_EMAIL') # Business sandbox account to test only
