@@ -85,7 +85,7 @@ def register_user(request):
 def update_user(request):
     user = request.user
     if request.method == 'POST':
-        form = UpdateUserForm(request.POST,instance=user) # apear form with data
+        form = UpdateUserForm(request.POST,instance=user) 
         if form.is_valid():
             form.save()  
             messages.success(request,'You have been Updated Profile Succussfully !')
