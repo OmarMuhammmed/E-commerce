@@ -110,10 +110,12 @@ class Cart:
                 return Coupon.objects.get(id=self.coupon_id)
             except Coupon.DoesNotExist:
                 pass
+            
+   # get discount Percentage         
     @property
     def get_discount(self):
         if self.coupon:
-            return (Decimal(self.coupon.discount)) 
+            return (Decimal(self.coupon.discount) / Decimal(100))
         return Decimal(0)
     @property
     def get_total_price_after_discount(self):
