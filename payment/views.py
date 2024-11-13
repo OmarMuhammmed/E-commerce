@@ -28,10 +28,10 @@ def checkout(request):
     discount = None 
 
     # Cupon system 
-    if request.method == 'POST' and 'code' in request.POST:
+    if request.method == 'POST' and 'coupon_code' in request.POST:
         coupon_form = CouponForm(request.POST)
         if coupon_form.is_valid():
-            code = coupon_form.cleaned_data['code']
+            code = coupon_form.cleaned_data['coupon_code']
             try:
                 coupon = Coupon.objects.get(
                     code__iexact=code,
@@ -51,6 +51,7 @@ def checkout(request):
                     "total_after_discount": total_after_discount,
                     "discount": discount,
                     'coupon_form': coupon_form,
+                    "shipping_price": shipping_price,
                     'shipping_form': ShippingInfoForm()
                 })
 
