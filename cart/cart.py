@@ -1,5 +1,6 @@
 from store.models import Product,CustomerProfile
-
+from payment.models import Coupon
+from decimal import Decimal
 class Cart:
     def __init__(self, request):
         self.session = request.session
@@ -10,6 +11,8 @@ class Cart:
         if not cart:
             cart = self.session['cart'] = {}
         self.cart = cart
+        # store current applied coupon
+        self.coupon_id = self.session.get('coupon_id')
 
     def save(self):
         ''' Mark the session as modified to save changes to the cart '''
@@ -98,5 +101,21 @@ class Cart:
                 total += product.sale_price * quantity
             else:
                 total += product.price * quantity
-        return total
-   
+        return Decimal(total) 
+    
+    @property
+    def coupon(self):
+        if self.coupon_id:
+            try :
+                return Coupon.objects.get(id=self.coupon_id)
+            except Coupon.DoesNotExist:
+                pass
+    @property
+    def get_discount(self):
+        if self.coupon:
+            return (Decimal(self.coupon.discount)) 
+        return Decimal(0)
+    @property
+    def get_total_price_after_discount(self):
+
+        return Decimal(self.total() - self.get_discount + Decimal(10)) # 10 is shipping price

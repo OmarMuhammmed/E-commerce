@@ -54,12 +54,25 @@
                     Order Summary
                 </div>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Subtotal: ${{total}}</li>
-                    <li class="list-group-item">Shipping: $5</li>
-                    <li class="list-group-item">Total: ${{finally_price}}</li>
+                    <li class="list-group-item">Subtotal: ${{ total }}</li>
+                    <li class="list-group-item">Shipping: ${{ shipping_price }}</li>
+                    <li class="list-group-item">
+                        {% if discount and total_after_discount%}
+                            <p style="color:green;">You have a discount of {{ discount }}%</p>
+                            Total after discount: ${{ total_after_discount }}
+                        {% else %}
+                            Total: ${{ finally_price }}
+                        {% endif %}
+                    </li>
                 </ul>
-            </div>
+            </div>                        
             <br>
+            <form method="POST">
+               {% csrf_token %}
+               {% bootstrap_form coupon_form %}
+                <button type="submit" class="btn btn-outline-success btn-sm">Apply Coupon</button>
+            </form>
+            <br/>
             <div class="card">
                 <div class="card-header">
                     <h4>    Shipping Info
@@ -68,7 +81,7 @@
                 <div class="card-body">
                     <form method="POST" action="{% url 'billing_info' %}">
                         {% csrf_token %}
-                        {% bootstrap_form shipping_form %}
+                        {% bootstrap_form shipping_form  %}
                         <button type="submit" class="btn btn-primary btn-block mt-4">Proceed to Payment</button>
                     </form>
                 </div>

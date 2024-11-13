@@ -56,9 +56,11 @@
               </div>
            </div>
             <ul class="list-group">
-                <li class="list-group-item">Subtotal: ${{total}}</li>
-                <li class="list-group-item">Shipping: $5</li>
-                <li class="list-group-item">Total: ${{finally_price}}</li>
+                {% if cart.get_total_price_after_discount and cart.get_discount %}
+                    <li class="list-group-item">Total after discount: ${{ finally_price }}</li>
+                {% else %}
+                    <li class="list-group-item">Total: ${{ finally_price }}</li>    
+                {%endif %}    
             </ul>
             <br>
             <div class="card">

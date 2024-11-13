@@ -1,7 +1,7 @@
 from django.shortcuts import render
-from .forms import ShippingInfoForm,PaymentForm
+from .forms import ShippingInfoForm, PaymentForm, CouponForm
 from cart.cart import Cart
-from .models import ShippingAdderss,Order,OrderItem
+from .models import ShippingAdderss, Order, OrderItem, Coupon
 from django.shortcuts import redirect
 from django.contrib import messages
 from store.models import CustomerProfile, Product
@@ -10,34 +10,87 @@ from django.urls import reverse
 from paypal.standard.forms import PayPalPaymentsForm
 from django.conf import settings
 import uuid
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 
 def checkout(request):
     cart = Cart(request)
+    now = timezone.now()
     cart_products = cart.get_products()
     product_qty = cart.get_qty_for_product()
-    total = cart.total() 
+    total = cart.total()
     shipping_price = 10 
     finally_price = shipping_price + total
+    coupon_form = CouponForm()
 
+    total_after_discount = None
+    discount = None 
+
+    # Cupon system 
+    if request.method == 'POST' and 'code' in request.POST:
+        coupon_form = CouponForm(request.POST)
+        if coupon_form.is_valid():
+            code = coupon_form.cleaned_data['code']
+            try:
+                coupon = Coupon.objects.get(
+                    code__iexact=code,
+                    valid_from__lte=now,
+                    valid_to__gte=now,
+                    active=True
+                )
+                request.session['coupon_id'] = coupon.id
+               
+                total_after_discount = cart.get_total_price_after_discount
+                discount = cart.get_discount
+                messages.success(request, 'Coupon Applied')
+                return render(request, 'payment/checkout.html', {
+                    "cart_products": cart_products, 
+                    "product_qty": product_qty, 
+                    "total": total,
+                    "total_after_discount": total_after_discount,
+                    "discount": discount,
+                    'coupon_form': coupon_form,
+                    'shipping_form': ShippingInfoForm()
+                })
+
+            except Coupon.DoesNotExist:
+                messages.error(request, 'This coupon is not valid')
+
+        return redirect('checkout')
+        
+    
+
+
+   
     if request.user.is_authenticated:
         shipping_user = ShippingAdderss.objects.get(user__id=request.user.id)
         shipping_form = ShippingInfoForm(request.POST or None, instance=shipping_user)
         
-        return render(request, "payment/checkout.html", {"cart_products":cart_products, 
-                                                         "product_qty":product_qty, 
-                                                         "total":total, 
-                                                         "shipping_form":shipping_form,
-                                                         'finally_price' :finally_price
-                                                           })
-    else :
+        return render(request, 'payment/checkout.html', {
+            "cart_products": cart_products,
+            "product_qty": product_qty,
+            "total": total,
+            "shipping_price":shipping_price,
+            "finally_price": finally_price,
+            "coupon_form": coupon_form,
+            "total_after_discount": total_after_discount,
+            "discount": discount,
+            "shipping_form": shipping_form,
+        })
+    
+    else:
         shipping_form = ShippingInfoForm(request.POST)
-        return render(request, 'payment/checkout.html', {'cart_products': cart_products,
-                                                        'product_qty': product_qty,
-                                                        'total': total,
-                                                        'finally_price' :finally_price,
-                                                        'shipping_form' :shipping_form
-                                                        })
+        return render(request, 'payment/checkout.html', {
+            'cart_products': cart_products,
+            'product_qty': product_qty,
+            'total': total,
+            'finally_price': finally_price,
+            'shipping_form': shipping_form,
+            'coupon_form': coupon_form,
+            "total_after_discount": total_after_discount,  
+            "discount": discount,  
+        })
 
 
 def billing_info(request):
@@ -46,8 +99,12 @@ def billing_info(request):
         cart_products = cart.get_products()
         product_qty = cart.get_qty_for_product()
         total = cart.total() 
-        shipping_price = 5 
-        finally_price = shipping_price + total
+        shipping_price = 10 
+        finally_price = None
+        if cart.get_total_price_after_discount and cart.get_discount:
+            finally_price = cart.get_total_price_after_discount 
+        else :    
+            finally_price = shipping_price + total
 
         # Create a session with Shipping Info
         my_shipping = request.POST
@@ -126,7 +183,8 @@ def billing_info(request):
                                                             "shipping_form":request.POST ,
                                                             'finally_price' :finally_price,
                                                             'billing_form' : billing_form ,
-                                                            'paypal_form' : paypal_form
+                                                            'paypal_form' : paypal_form,
+                                                          
                                                         })
         else :
             # Not logged in  
@@ -156,6 +214,7 @@ def billing_info(request):
                                                             'finally_price' :finally_price,
                                                             'billing_form' : billing_form,
                                                             'paypal_form' : paypal_form,
+                                                          
                                                            })
     else:
         messages.success(request,'Access Denied')
@@ -347,3 +406,8 @@ def payment_success(request):
 def payment_failed(request):
     return render(request,'payment/payment_failed.html',{})
 
+# @require_POST
+# def apply_coupon(request):
+    
+    
+#    pass

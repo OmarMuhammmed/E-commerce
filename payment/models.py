@@ -4,7 +4,8 @@ from django.dispatch import receiver
 from store.models import Product
 from django.db.models.signals import post_save,pre_save
 import datetime
-
+from django.core.validators import MinValueValidator,  MaxValueValidator
+                                  
 
 class ShippingAdderss(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -20,9 +21,9 @@ class ShippingAdderss(models.Model):
     # Create a Shipping Profile by defult when user sings up 
     @receiver(post_save, sender=User)
     def created_shipping_adderss(sender, instance, created, **kwargs):
-      if created:
-         user_shipping = ShippingAdderss(user=instance)
-         user_shipping.save()
+        if created:
+            user_shipping = ShippingAdderss(user=instance)
+            user_shipping.save()
 
     class Meta:
       verbose_name_plural = 'Shipping Adderss'
@@ -45,16 +46,16 @@ class Order(models.Model):
     
 
     def __str__(self):
-      return f'Order - {str(self.id)}'
+        return f'Order - {str(self.id)}'
 
 # Auto add shipping date before save any Order
 @receiver(pre_save, sender = Order)
 def auto_shipped_date(sender, instance, **kwargs):
     if instance.pk:
-       now = datetime.datetime.now()
-       obj = sender._default_manager.get(pk=instance.pk)
-       if instance.shipped and not obj.shipped:
-          instance.date_shipped = now
+        now = datetime.datetime.now()
+        obj = sender._default_manager.get(pk=instance.pk)
+        if instance.shipped and not obj.shipped:
+            instance.date_shipped = now
 
     
 
@@ -69,6 +70,18 @@ class OrderItem(models.Model):
     
     def __str__(self):
       return f'OrderI tem - {str(self.id)}'
+    
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    valid_from = models.DateTimeField()
+    valid_to = models.DateTimeField()
+    discount = models.IntegerField(validators=[MinValueValidator(0), 
+                                               MaxValueValidator(100)],
+                                               help_text='Percentage value (0 to 100)')
+    active = models.BooleanField(default=True)
+    def __str__(self):
+        return self.code
     
 
 
