@@ -57,7 +57,7 @@
                     <li class="list-group-item">Subtotal: ${{ total }}</li>
                     <li class="list-group-item">Shipping: ${{ shipping_price }}</li>
                     <li class="list-group-item">
-                        {% if discount and total_after_discount%}
+                        {% if discount and total_after_discount %}
                             <p style="color:green;">You have a discount of {{ discount }}%</p>
                             Total after discount: ${{ total_after_discount }}
                         {% else %}

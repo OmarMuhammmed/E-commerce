@@ -52,6 +52,7 @@ def checkout(request):
                     "discount": discount,
                     'coupon_form': coupon_form,
                     "shipping_price": shipping_price,
+                    "discount" : discount,
                     'shipping_form': ShippingInfoForm()
                 })
 
@@ -86,6 +87,7 @@ def checkout(request):
             'cart_products': cart_products,
             'product_qty': product_qty,
             'total': total,
+            "shipping_price": shipping_price,
             'finally_price': finally_price,
             'shipping_form': shipping_form,
             'coupon_form': coupon_form,
