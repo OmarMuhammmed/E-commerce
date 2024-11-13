@@ -43,6 +43,7 @@ def checkout(request):
                
                 total_after_discount = cart.get_total_price_after_discount
                 discount = cart.get_discount
+                discount_percentage = cart.get_discount_percentage
                 messages.success(request, 'Coupon Applied')
                 return render(request, 'payment/checkout.html', {
                     "cart_products": cart_products, 
@@ -53,7 +54,8 @@ def checkout(request):
                     'coupon_form': coupon_form,
                     "shipping_price": shipping_price,
                     "discount" : discount,
-                    'shipping_form': ShippingInfoForm()
+                    'shipping_form': ShippingInfoForm(),
+                    'discount_percentage': discount_percentage,
                 })
 
             except Coupon.DoesNotExist:
@@ -79,6 +81,7 @@ def checkout(request):
             "total_after_discount": total_after_discount,
             "discount": discount,
             "shipping_form": shipping_form,
+            'discount_percentage': discount_percentage,
         })
     
     else:
@@ -93,6 +96,7 @@ def checkout(request):
             'coupon_form': coupon_form,
             "total_after_discount": total_after_discount,  
             "discount": discount,  
+            'discount_percentage': discount_percentage,
         })
 
 
