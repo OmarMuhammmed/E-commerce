@@ -26,6 +26,7 @@ def checkout(request):
 
     total_after_discount = None
     discount = None 
+    discount_percentage = None
 
     # Cupon system 
     if request.method == 'POST' and 'coupon_code' in request.POST:
