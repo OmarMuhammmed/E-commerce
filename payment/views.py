@@ -12,7 +12,8 @@ from django.conf import settings
 import uuid
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-
+from django.views import View 
+from django.db import transaction
 
 def checkout(request):
     cart = Cart(request)
@@ -65,9 +66,6 @@ def checkout(request):
         return redirect('checkout')
         
     
-
-
-   
     if request.user.is_authenticated:
         shipping_user = ShippingAdderss.objects.get(user__id=request.user.id)
         shipping_form = ShippingInfoForm(request.POST or None, instance=shipping_user)
@@ -182,6 +180,8 @@ def billing_info(request):
                         create_order_item.save()
             
             # Delete Cart from DB (old_cart field)
+            # object = ProcessOrderView()
+            # object.clear_cart(request)
             current_user = CustomerProfile.objects.filter(user__id = request.user.id)
             current_user.update(old_cart="")
 
@@ -228,106 +228,90 @@ def billing_info(request):
         messages.success(request,'Access Denied')
         return redirect('home')
 
+class ProcessOrderView(View):
 
-def process_order(request):
-    if request.POST:
+    def post(self, request, *args, **kwargs):
         cart = Cart(request)
         cart_products = cart.get_products()
         product_qty = cart.get_qty_for_product()
-        total = cart.total() 
-        shipping_price = 10 
+        total = cart.total()
+        shipping_price = 10
         finally_price = shipping_price + total
         payment_form = PaymentForm(request.POST)
         my_shipping = request.session.get('my_shipping')
 
-        # Get order info 
+        # Get order info
         full_name = my_shipping['full_name']
         email = my_shipping['email']
-       
+
         # Create Shipping Address from session info
-        shipping_address = f"{my_shipping['address1']}\n{my_shipping['address2']}\n{my_shipping['city']}\n{my_shipping['state']}\n{my_shipping['zipcode']}\n{my_shipping['country']}"
+        shipping_address = (
+            f"{my_shipping['address1']}\n"
+            f"{my_shipping['address2']}\n"
+            f"{my_shipping['city']}\n"
+            f"{my_shipping['state']}\n"
+            f"{my_shipping['zipcode']}\n"
+            f"{my_shipping['country']}"
+        )
         amount_paid = finally_price
 
-        # Create Order
+        # Use transaction.atomic to ensure all-or-nothing
+        with transaction.atomic():
+            if request.user.is_authenticated:
+                user = request.user
+                create_order = Order.objects.create(
+                    user=user,
+                    full_name=full_name,
+                    email=email,
+                    amount_paid=amount_paid,
+                    shipping_adderss=shipping_address
+                )
+               
+                # Add Order Item
+                self.add_order_items(create_order, cart_products, product_qty, user)
+
+                # Clear Cart
+                self.clear_cart(request)
+                
+                messages.success(request, 'Order placed...')
+                return redirect('home')
+            else:
+                # not login
+                create_order = Order.objects.create(
+                    full_name=full_name,
+                    email=email,
+                    amount_paid=amount_paid,
+                    shipping_adderss=shipping_address
+                )
+                
+                # Add Order Item
+                self.add_order_items(create_order, cart_products, product_qty)
+                    
+                messages.success(request, 'Order placed...')
+                return redirect('home')
+
+    def add_order_items(self, order, cart_products, product_qty, user=None):
+        for product in cart_products:
+            product_id = product.id
+            price = product.sale_price if product.is_sale else product.price
+            quantity = product_qty.get(str(product_id), 0)
+            if quantity:
+                # Create and save each order item
+                order_item = OrderItem(
+                    user=user,
+                    order=order,
+                    product_id=product_id,
+                    quantity=quantity,
+                    price=price
+                )
+                order_item.save()  # Save to trigger signals
+
+    def clear_cart(self, request):
+        for key in list(request.session.keys()):
+            if key == 'cart':
+                del request.session[key]
         if request.user.is_authenticated:
-            user = request.user
-            create_order = Order(
-                                user=user, 
-                                full_name=full_name,
-                                email=email, 
-                                amount_paid=amount_paid, 
-                                shipping_adderss=shipping_address
-                                )
-            create_order.save()
-
-           # Add Order Item 
-           # Get Order Item Info
-            order_id = create_order.pk
-            for product in cart_products:
-                product_id = product.id
-                if product.is_sale:
-                    price = product.sale_price
-                else:
-                    price = product.price    
-                for key, value in product_qty.items():
-                    if int(key) == product.id :
-                        quantity = value 
-                        # Create Order Item 
-                        create_order_item = OrderItem(
-                                                      user=user,
-                                                      order_id=order_id,
-                                                      product_id=product_id,
-                                                      quantity=quantity,
-                                                      price=price
-                                                      )   
-                        create_order_item.save()
-            # Delete Your Cart 
-            for key in list(request.session.keys()):
-                if key == 'cart':
-                    del request.session[key]
-
-            # Delete Cart from DB (old_cart field)
-            current_user = CustomerProfile.objects.filter(user__id = request.user.id)
-            current_user.update(old_cart="")
-           
-            messages.success(request,'Order placed...')
-            return redirect('home')
-        else:
-            # not login 
-            create_order = Order(           
-                              full_name=full_name,
-                              email=email, 
-                              amount_paid=amount_paid, 
-                              shipping_adderss=shipping_address
-                              )
-            create_order.save()
-
-           # Add Order Item 
-           # Get Order Item Info
-            order_id = create_order.pk
-            for product in cart_products:
-                product_id = product.id
-                if product.is_sale:
-                    price = product.sale_price
-                else:
-                    price = product.price    
-                for key, value in product_qty.items():
-                    if int(key) == product.id :
-                        quantity = value 
-                        # Create Order Item 
-                        create_order_item = OrderItem(
-                                                      order_id=order_id,
-                                                      product_id=product_id,
-                                                      quantity=quantity,
-                                                      price=price
-                                                      )   
-                        create_order_item.save()
-            messages.success(request,'Order placed...')
-            return redirect('home')
-
-    else:
-        messages.success(request,'Access Denied...')
-        return redirect('home')
+            CustomerProfile.objects.filter(user=request.user).update(old_cart="")
 
 
 def shipped_dash(request):
@@ -414,8 +398,3 @@ def payment_success(request):
 def payment_failed(request):
     return render(request,'payment/payment_failed.html',{})
 
-# @require_POST
-# def apply_coupon(request):
-    
-    
-#    pass
