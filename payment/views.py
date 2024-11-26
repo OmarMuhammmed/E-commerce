@@ -228,6 +228,102 @@ def billing_info(request):
         messages.success(request,'Access Denied')
         return redirect('home')
 
+class BillingInfoView(View):
+
+    template_name = "payment/billing_info.html"
+
+    def get_cart_data(self, request):
+        cart = Cart(request)
+        return {
+            "cart_products": cart.get_products(),
+            "product_qty": cart.get_qty_for_product(),
+            "total": cart.total(),
+            "shipping_price": 10,
+            "finally_price": cart.get_total_price_after_discount or (10 + cart.total()), 
+        }
+
+    def create_paypal_form(self, finally_price, my_invoice, host):
+        paypal_dict = {
+            "business": settings.PAYPAL_RECEIVER_EMAIL,
+            "amount": finally_price,
+            "item_name": "Book Order",
+            "no_shipping": "2",
+            "invoice": my_invoice,
+            "currency_code": "USD",
+            'notify_url': f'https://{host}{reverse("paypal-ipn")}',
+            'return_url': f'https://{host}{reverse("payment_success")}',
+            'cancel_return': f'https://{host}{reverse("payment_failed")}',
+        }
+        return PayPalPaymentsForm(initial=paypal_dict)
+
+    def create_order(self, user, shipping_info, finally_price, my_invoice):
+        shipping_address = (
+            f"{shipping_info['address1']}\n{shipping_info['address2']}\n"
+            f"{shipping_info['city']}\n{shipping_info['state']}\n"
+            f"{shipping_info['zipcode']}\n{shipping_info['country']}"
+        )  
+        order = Order.objects.create(
+            user=user,
+            full_name=shipping_info['full_name'],
+            email=shipping_info['email'],
+            amount_paid=finally_price,
+            shipping_adderss=shipping_address,
+            invoice=my_invoice
+        )
+        return order   
+
+    def create_order_items(self, user, order, cart_products, product_qty):
+        for product in cart_products:
+            price = product.sale_price if product.is_sale else product.price
+            quantity = product_qty.get(str(product.id), 0)
+            OrderItem.objects.create(
+                user=user,
+                order=order,
+                product_id=product.id,
+                quantity=quantity,
+                price=price
+            )  
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Please log in to continue.")
+            return redirect('login')
+
+        cart_data = self.get_cart_data(request)
+        cart_products = cart_data["cart_products"]
+        product_qty = cart_data["product_qty"]
+        finally_price = cart_data["finally_price"]
+
+        # Save shipping info in session
+        request.session['my_shipping'] = request.POST
+        my_shipping = request.session['my_shipping']
+
+        # Create Order and Order items 
+        my_invoice = str(uuid.uuid4())
+        order = self.create_order(request.user, my_shipping, finally_price, my_invoice)
+        self.create_order_items(request.user, order, cart_products, product_qty)
+
+        # clear Cart 
+        CustomerProfile.objects.filter(user=request.user).update(old_cart="")
+
+        # Generate PayPal form
+        host = request.get_host()
+        paypal_form = self.create_paypal_form(finally_price, my_invoice, host)
+
+        billing_form = PaymentForm()
+        return render(request, self.template_name, {
+            "cart_products": cart_products,
+            "product_qty": product_qty,
+            "total": cart_data["total"],
+            "finally_price": finally_price,
+            "billing_form": billing_form,
+            "paypal_form": paypal_form,
+        })
+
+    def get(self, request, *args, **kwargs):
+        messages.error(request, "Access Denied")
+        return redirect('home')
+        
 class ProcessOrderView(View):
 
     def post(self, request, *args, **kwargs):
