@@ -231,6 +231,7 @@ def billing_info(request):
 class BillingInfoView(View):
 
     template_name = "payment/billing_info.html"
+    
 
     def get_cart_data(self, request):
         cart = Cart(request)
@@ -318,12 +319,35 @@ class BillingInfoView(View):
             "finally_price": finally_price,
             "billing_form": billing_form,
             "paypal_form": paypal_form,
+            "myshipping": my_shipping , 
         })
 
     def get(self, request, *args, **kwargs):
-        messages.error(request, "Access Denied")
-        return redirect('home')
-        
+        if not request.user.is_authenticated:
+            messages.error(request, "Please log in to continue.")
+            return redirect('login')
+
+        # Retrieve the shipping information from session if it's available
+        my_shipping = request.session.get('my_shipping', None)
+        print(my_shipping)
+        # Fetch cart data as usual
+        cart_data = self.get_cart_data(request)
+        cart_products = cart_data["cart_products"]
+        product_qty = cart_data["product_qty"]
+        finally_price = cart_data["finally_price"]
+
+        billing_form = PaymentForm()
+        return render(request, self.template_name, {
+            "cart_products": cart_products,
+            "product_qty": product_qty,
+            "total": cart_data["total"],
+            "finally_price": finally_price,
+            "billing_form": billing_form,
+            "paypal_form": self.create_paypal_form(finally_price, str(uuid.uuid4()), request.get_host()),
+            "myshipping": my_shipping,  # Send shipping info to the template
+        })
+    
+
 class ProcessOrderView(View):
 
     def post(self, request, *args, **kwargs):

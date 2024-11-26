@@ -38,7 +38,6 @@
                             {% else %}
                             <p class="card-text">Price: ${{ product.price }}</p>
                             {% endif %}
-                            
                         </div>
                     </div>
                 </div>
@@ -60,7 +59,7 @@
                     <li class="list-group-item">Total after discount: ${{ finally_price }}</li>
                 {% else %}
                     <li class="list-group-item">Total: ${{ finally_price }}</li>    
-                {%endif %}    
+                {% endif %}    
             </ul>
             <br>
             <div class="card">
@@ -68,40 +67,19 @@
                 Shipping Info
               </div>
               <div class="card-body">
-                  <div class="col-md-6">
-                      <p><strong>Full Name:</strong> {{ shipping_form.full_name }}</p>
-                  </div>
-                  <div class="col-md-6">
-                      <p><strong>Email:</strong> {{ shipping_form.email }}</p>
-                  </div>
-                  <div class="col-md-12">
-                      <p><strong>Address 1:</strong> {{ shipping_form.address1 }}</p>
-                  </div>
-                  <div class="col-md-6">
-                      <p><strong>Country:</strong> {{ shipping_form.country }}</p>
-                  </div>
-                 
-                  <div class="col-md-12">
-                      <p><strong>Address  2:</strong> {{ shipping_form.address2 }}</p>
-                  </div>
-                 
-                  <div class="col-md-6">
-                      <p><strong>City:</strong> {{ shipping_form.city }}</p>
-                  </div>
-                 
-                  <div class="col-md-6">
-                      <p><strong>Zip Code:</strong> {{ shipping_form.zipcode }}</p>
-                  </div>
-                 
-                  <div class="col-md-6">
-                      <p><strong>State:</strong> {{ shipping_form.state }}</p>
-                  </div>
-                  
+                  <p><strong>Full Name:</strong> {{ myshipping.full_name }}</p>
+                  <p><strong>Email:</strong> {{ myshipping.email }}</p>
+                  <p><strong>Address 1:</strong> {{ myshipping.address1 }}</p>
+                  <p><strong>Country:</strong> {{ myshipping.country }}</p>
+                  <p><strong>Address  2:</strong> {{ myshipping.address2 }}</p>
+                  <p><strong>City:</strong> {{ myshipping.city }}</p>
+                  <p><strong>Zip Code:</strong> {{ myshipping.zipcode }}</p>
+                  <p><strong>State:</strong> {{ myshipping.state }}</p>
                   <a class="btn btn-secondary btn-block mt-4" href="{% url 'checkout' %}">Update Shipping</a>
               </div>
             </div>
             <br><br><br>
-            {{paypal_form.render}}
+            {{ paypal_form.render }}
             <br><br>
             <div class="card">
               <div class="card-header">
@@ -113,7 +91,6 @@
                   {{ billing_form.as_p }}
                   <button type="submit" class="btn btn-success btn-block mt-4">Pay Now</button>
                 </form>
-                
               </div>
             </div>
             <br/>
