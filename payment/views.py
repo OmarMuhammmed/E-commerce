@@ -10,29 +10,28 @@ from django.urls import reverse
 from paypal.standard.forms import PayPalPaymentsForm
 from django.conf import settings
 import uuid
-from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.views import View 
 from django.db import transaction
 
-# []
-def checkout(request):
-    cart = Cart(request)
-    now = timezone.now()
-    cart_products = cart.get_products()
-    product_qty = cart.get_qty_for_product()
-    total = cart.total()
+
+class CheckoutView(View):
+    
     shipping_price = 10 
-    finally_price = shipping_price + total
-    coupon_form = CouponForm()
 
-    total_after_discount = None
-    discount = None 
-    discount_percentage = None
+    def get_cart_data(self, request):
+        cart = Cart(request)
+        return {
+            "cart_products": cart.get_products(),
+            "product_qty": cart.get_qty_for_product(),
+            "total": cart.total(),
+        }
 
-    # Cupon system 
-    if request.method == 'POST' and 'coupon_code' in request.POST:
+    def handle_coupon(self, request, cart):
+        now = timezone.now()
         coupon_form = CouponForm(request.POST)
+        total_after_discount = discount = discount_percentage = None
+
         if coupon_form.is_valid():
             code = coupon_form.cleaned_data['coupon_code']
             try:
@@ -43,62 +42,75 @@ def checkout(request):
                     active=True
                 )
                 request.session['coupon_id'] = coupon.id
-               
                 total_after_discount = cart.get_total_price_after_discount
                 discount = cart.get_discount
                 discount_percentage = cart.get_discount_percentage
                 messages.success(request, 'Coupon Applied')
-                return render(request, 'payment/checkout.html', {
-                    "cart_products": cart_products, 
-                    "product_qty": product_qty, 
-                    "total": total,
-                    "total_after_discount": total_after_discount,
-                    "discount": discount,
-                    'coupon_form': coupon_form,
-                    "shipping_price": shipping_price,
-                    "discount" : discount,
-                    'shipping_form': ShippingInfoForm(),
-                    'discount_percentage': discount_percentage,
-                })
 
             except Coupon.DoesNotExist:
                 messages.error(request, 'This coupon is not valid')
 
-        return redirect('checkout')
-        
-    
-    if request.user.is_authenticated:
-        shipping_user = ShippingAdderss.objects.get(user__id=request.user.id)
-        shipping_form = ShippingInfoForm(request.POST or None, instance=shipping_user)
-        
-        return render(request, 'payment/checkout.html', {
-            "cart_products": cart_products,
-            "product_qty": product_qty,
-            "total": total,
-            "shipping_price":shipping_price,
-            "finally_price": finally_price,
-            "coupon_form": coupon_form,
-            "total_after_discount": total_after_discount,
-            "discount": discount,
-            "shipping_form": shipping_form,
-            'discount_percentage': discount_percentage,
-        })
-    
-    else:
-        shipping_form = ShippingInfoForm(request.POST)
-        return render(request, 'payment/checkout.html', {
-            'cart_products': cart_products,
-            'product_qty': product_qty,
-            'total': total,
-            "shipping_price": shipping_price,
-            'finally_price': finally_price,
-            'shipping_form': shipping_form,
-            'coupon_form': coupon_form,
-            "total_after_discount": total_after_discount,  
-            "discount": discount,  
-            'discount_percentage': discount_percentage,
-        })
+        return coupon_form, total_after_discount, discount, discount_percentage 
 
+    def get(self, request, *args, **kwargs):
+        cart_data = self.get_cart_data(request) 
+        cart = Cart(request)
+        coupon_form = CouponForm()
+        finally_price = cart_data['total'] + self.shipping_price
+
+        if request.user.is_authenticated:
+            shipping_user = ShippingAdderss.objects.get(user__id=request.user.id)
+            shipping_form = ShippingInfoForm(instance=shipping_user)
+        else:
+            shipping_form = ShippingInfoForm()
+
+        return render(request, 'payment/checkout.html', {
+            **cart_data,
+            'shipping_price': self.shipping_price,
+            'finally_price': finally_price,
+            'coupon_form': coupon_form,
+            'shipping_form': shipping_form,
+            'total_after_discount': None,
+            'discount': None,
+            'discount_percentage': None,
+        })   
+
+    def post(self, request):
+      
+        cart_data = self.get_cart_data(request)
+        cart = Cart(request)
+        finally_price = cart_data['total'] + self.shipping_price
+
+        if 'coupon_code' in request.POST:
+            # unpacking data
+            coupon_form, total_after_discount, discount, discount_percentage = self.handle_coupon(request, cart)
+            return render(request, 'payment/checkout.html', {
+                **cart_data,
+                'shipping_price': self.shipping_price,
+                'finally_price': finally_price,
+                'coupon_form': coupon_form,
+                'total_after_discount': total_after_discount,
+                'discount': discount,
+                'discount_percentage': discount_percentage,
+                'shipping_form': ShippingInfoForm(),
+            })
+
+        if request.user.is_authenticated:
+            shipping_user = ShippingAdderss.objects.get(user__id=request.user.id)
+            shipping_form = ShippingInfoForm(request.POST or None, instance=shipping_user)
+        else:
+            shipping_form = ShippingInfoForm(request.POST)
+
+        return render(request, 'payment/checkout.html', {
+            **cart_data,
+            'shipping_price': self.shipping_price,
+            'finally_price': finally_price,
+            'coupon_form': CouponForm(),
+            'total_after_discount': None,
+            'discount': None,
+            'discount_percentage': None,
+            'shipping_form': shipping_form,
+        })       
 
 class BillingInfoView(View):
 
@@ -315,12 +327,13 @@ def shipped_dash(request):
             now = datetime.datetime.now()
 
             order = Order.objects.filter(id=num) 
-
             order.update(shipped=False)
 
             messages.success(request, 'Shipping status Updated')
             return redirect('home')
+
         return render(request, "payment/shipped_dash.html", {'orders':orders})
+
     else:
         messages.success(request,'Access Denied')
         return redirect('home')
