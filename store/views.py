@@ -11,9 +11,17 @@ import json
 from cart.cart import Cart
 from payment.models import ShippingAdderss
 from payment.forms import ShippingInfoForm
+from django.core.cache import cache 
+
 
 def home(request):
-    products = Product.objects.all()
+    
+    products = cache.get('products')
+    # for handle cache 
+    if not products:
+        products = Product.objects.all()
+        cache.set('products', products, timeout=60*10 ) 
+
     # For Search 
     if 'search_name' in request.GET:
         name = request.GET['search_name']
@@ -40,12 +48,13 @@ def login_user(request):
 
             current_user = CustomerProfile.objects.get(user__id= request.user.id )
             carty = current_user.old_cart 
+
             if carty:
-              # Convert to dictionary using JSON
-              converted_cart = json.loads(carty)
-              cart = Cart(request)
-              for key,value in converted_cart.items():
-                cart.db_add(product=key, quantity=value)
+                # Convert to dictionary using JSON
+                converted_cart = json.loads(carty)
+                cart = Cart(request)
+                for key,value in converted_cart.items():
+                    cart.db_add(product=key, quantity=value)
 
             messages.success(request, ("You Have Been Logged In!"))
             return redirect('home')
@@ -140,17 +149,28 @@ def product(requset,id):
     return render(requset,'product.html',{'product':product})
 
 def category(request, foo):
-	# Replace Hyphens with Spaces
-	foo = foo.replace('-', ' ')
-	# Grab the category from the url
-	try:
-		# Look Up The Category in DB 
-		category = Category.objects.get(name=foo)
-		products = Product.objects.filter(category=category)
-		return render(request, 'category.html', {'products':products, 'category':category})
-	except:
-		messages.error(request, ("That Category Doesn't Exist..."))
-		return redirect('home')
+    # Replace hyphens with spaces
+    foo = foo.replace('-', ' ')
+    
+    cache_key = f'category_{foo}'
+    products = cache.get(cache_key)
+    
+    if not products:
+        try:
+            category = Category.objects.get(name=foo)
+            products = Product.objects.filter(category=category)
+            
+            cache.set(cache_key, products, timeout=60*10)
+            
+            return render(request, 'category.html', {'products': products, 'category': category})
+        
+        except Category.DoesNotExist:
+            messages.error(request, ("That Category Doesn't Exist..."))
+            return redirect('home')
+    else:
+
+        category = Category.objects.get(name=foo) 
+        return render(request, 'category.html', {'products': products, 'category': category})
 
 def category_summary(request):
      catagory = Category.objects.all()

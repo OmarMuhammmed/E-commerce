@@ -17,11 +17,11 @@ class Cart:
         self.coupon_id = self.session.get('coupon_id')
 
     def save(self):
-        ''' Mark the session as modified to save changes to the cart '''
+       
         self.session.modified = True 
 
     def manage_cart(self) :
-        """ Each user has his own cart especially."""
+       
         # Deal with login user 
         if self.request.user.is_authenticated:
             current_user = CustomerProfile.objects.filter(user__id= self.request.user.id ) 
@@ -46,7 +46,7 @@ class Cart:
      
      
     def add(self, product, quantity):
-        # Convert product ID to string to use as a key in the cart dictionary
+        # Convert product ID to string to use as a key in the cart dict
         product_id = str(product.id) 
         # Convert the quantity to an integer
         product_qty = int(quantity)

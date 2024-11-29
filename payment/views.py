@@ -112,6 +112,7 @@ class CheckoutView(View):
             'shipping_form': shipping_form,
         })       
 
+
 class BillingInfoView(View):
 
     template_name = "payment/billing_info.html"
